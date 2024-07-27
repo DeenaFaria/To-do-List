@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>To-Do List</title>
+  <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #f0f0f0;
+    }
+    .App {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 300px;
+    }
+    input, button {
+      margin: 5px 0;
+      padding: 10px;
+      width: calc(100% - 22px);
+    }
+    button {
+      cursor: pointer;
+    }
+    .todo-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+    }
+    .todo-item button {
+      background: red;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .todo-item.completed span {
+      text-decoration: line-through;
+      color: grey;
+    }
+    .todo-item span.date {
+      font-size: 0.8em;
+      color: grey;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    function TodoItem({ task, onDelete, onToggle }) {
+      return (
+        <div className={`todo-item ${task.completed ? 'completed' : ''}`}>
+          <div>
+            <input type="checkbox" checked={task.completed} onChange={() => onToggle(task.id)} />
+            <span>{task.text}</span>
+            <br/>
+            <span className="date">{new Date(task.date).toLocaleDateString()}</span>
+          </div>
+          <button onClick={onDelete}>Delete</button>
+        </div>
+      );
+    }
+
+    function TodoList({ tasks, onDeleteTask, onToggleTask }) {
+      return (
+        <div>
+          {tasks.map(task => (
+            <TodoItem key={task.id} task={task} onDelete={() => onDeleteTask(task.id)} onToggle={onToggleTask} />
+          ))}
+        </div>
+      );
+    }
+
+    function App() {
+      const [tasks, setTasks] = React.useState(() => {
+        const savedTasks = localStorage.getItem('tasks');
+        return savedTasks ? JSON.parse(savedTasks) : [];
+      });
+      const [inputTask, setInputTask] = React.useState('');
+
+      React.useEffect(() => {
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+      }, [tasks]);
+
+      const handleAddTask = () => {
+        if (inputTask.trim() !== '') {
+          setTasks([...tasks, { id: Date.now(), text: inputTask, completed: false, date: Date.now() }]);
+          setInputTask('');
+        }
+      };
+
+      const handleDeleteTask = (taskId) => {
+        const updatedTasks = tasks.filter(task => task.id !== taskId);
+        setTasks(updatedTasks);
+      };
+
+      const handleToggleTask = (taskId) => {
+        const updatedTasks = tasks.map(task =>
+          task.id === taskId ? { ...task, completed: !task.completed } : task
+        );
+        setTasks(updatedTasks);
+      };
+
+      return (
+        <div className="App">
+          <h1>To-Do List</h1>
+          <input
+            type="text"
+            value={inputTask}
+            onChange={(e) => setInputTask(e.target.value)}
+            placeholder="Enter task..."
+          />
+          <button onClick={handleAddTask}>Add Task</button>
+          <TodoList tasks={tasks} onDeleteTask={handleDeleteTask} onToggleTask={handleToggleTask} />
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById('root'));
+  </script>
+</body>
+</html>
